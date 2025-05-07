@@ -2,234 +2,43 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Lector Code Assist</title>
   <script src="https://unpkg.com/@zxing/library@latest"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f4f4;
-      margin: 0;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    h1 {
-      color: #333;
-    }
-
     video {
-      width: 90%;
-      max-width: 640px;
-      margin-top: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 600px;
+      border: 1px solid #ccc;
     }
-
-    button, select {
-      margin: 10px 5px;
-      padding: 12px 20px;
-      font-size: 15px;
-      border: none;
-      border-radius: 8px;
-      background-color: #007bff;
-      color: white;
-      cursor: pointer;
-    }
-
-    button:hover, select:hover {
-      background-color: #0056b3;
-    }
-
     #output {
-      margin-top: 20px;
-      font-size: 18px;
-      color: #1a1a1a;
-      background: #fff;
-      padding: 10px 20px;
-      border-radius: 10px;
-      min-height: 30px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-
-    #log {
-      margin-top: 20px;
-      max-height: 200px;
-      width: 90%;
-      max-width: 640px;
-      overflow-y: auto;
-      background: #fff;
-      border-radius: 10px;
-      padding: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-
-    .log-entry {
-      padding: 6px 10px;
-      margin-bottom: 4px;
-      border-left: 5px solid green;
-      background: #f1f1f1;
-    }
-
-    .duplicate {
-      border-left-color: orange;
-      background: #fff4e5;
+      margin-top: 10px;
+      font-family: monospace;
+      font-size: 1.2em;
     }
   </style>
 </head>
 <body>
   <h1>Lector Code Assist</h1>
-  <p>Scan barcodes and QR codes with filters, logs, and export</p>
-
-  <div>
-    <button id="startBtn">Start Scanning</button>
-    <button id="pauseBtn" disabled>Pause</button>
-    <button id="resumeBtn" disabled>Resume</button>
-    <button id="stopBtn" disabled>Stop Camera</button>
-    <button id="exportBtn" disabled>Export Results</button>
-    <select id="filterSelect">
-      <option value="all">All Codes</option>
-      <option value="qr">QR Codes Only</option>
-      <option value="bar">Barcodes Only</option>
-    </select>
-  </div>
-
+  <button id="start-button">Start Camera</button>
   <video id="video" autoplay playsinline></video>
-  <div id="output">Scanned code will appear here.</div>
-  <div id="log"></div>
-
-  <audio id="beep" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
+  <div id="output">Decoded content will appear here...</div>
 
   <script>
-    const startBtn = document.getElementById('startBtn');
-    const pauseBtn = document.getElementById('pauseBtn');
-    const resumeBtn = document.getElementById('resumeBtn');
-    const stopBtn = document.getElementById('stopBtn');
-    const exportBtn = document.getElementById('exportBtn');
-    const filterSelect = document.getElementById('filterSelect');
-    const video = document.getElementById('video');
-    const output = document.getElementById('output');
-    const beep = document.getElementById('beep');
-    const log = document.getElementById('log');
+    const startButton = document.getElementById("start-button");
+    const video = document.getElementById("video");
+    const output = document.getElementById("output");
 
-    let codeReader = null;
-    let scannedResults = new Set();
-    let scannedLog = [];
-    let scanning = true;
-    let formatFilter = 'all';
-    let activeStream = null;
-    let currentControls = null;
-
-    const playFeedback = () => {
-      beep.play();
-      if (navigator.vibrate) navigator.vibrate(200);
-    };
-
-    const updateOutput = (msg) => {
-      output.textContent = msg;
-    };
-
-    const appendToLog = (text, isDuplicate) => {
-      const div = document.createElement('div');
-      div.className = 'log-entry' + (isDuplicate ? ' duplicate' : '');
-      div.textContent = text;
-      log.prepend(div);
-    };
-
-    filterSelect.addEventListener('change', () => {
-      formatFilter = filterSelect.value;
-    });
-
-    startBtn.addEventListener('click', async () => {
-      codeReader = new ZXing.BrowserMultiFormatReader();
-      const devices = await ZXing.BrowserCodeReader.listVideoInputDevices();
-      const camera = devices[0]?.deviceId;
-      if (!camera) return alert("No camera found.");
-
-      currentControls = await codeReader.decodeFromVideoDevice(
-        camera,
-        video,
-        (result, err, controls) => {
-          activeStream = video.srcObject;
-          if (!scanning) return;
-
-          if (result) {
-            const text = result.getText();
-            const format = result.getBarcodeFormat();
-            const isQR = format.toLowerCase().includes('qr');
-            const isBar = !isQR;
-
-            if (
-              (formatFilter === 'qr' && !isQR) ||
-              (formatFilter === 'bar' && !isBar)
-            ) return;
-
-            const isDuplicate = scannedResults.has(text);
-            if (!isDuplicate) {
-              scannedResults.add(text);
-              scannedLog.push({ text, format });
-              playFeedback();
-            }
-
-            updateOutput(`${isDuplicate ? "⚠️ Duplicate: " : "✅ New: "} ${text}`);
-            appendToLog(`${format}: ${text}`, isDuplicate);
-          } else if (err && !(err instanceof ZXing.NotFoundException)) {
-            console.error(err);
-            updateOutput("Error: " + err);
-          }
+    startButton.addEventListener("click", () => {
+      const codeReader = new ZXing.BrowserMultiFormatReader();
+      codeReader.decodeFromVideoDevice(null, "video", (result, err) => {
+        if (result) {
+          output.textContent = result.getText();
         }
-      );
-
-      startBtn.disabled = true;
-      pauseBtn.disabled = false;
-      stopBtn.disabled = false;
-      exportBtn.disabled = false;
-    });
-
-    pauseBtn.addEventListener('click', () => {
-      scanning = false;
-      updateOutput("⏸️ Scanning paused.");
-      pauseBtn.disabled = true;
-      resumeBtn.disabled = false;
-    });
-
-    resumeBtn.addEventListener('click', () => {
-      scanning = true;
-      updateOutput("▶️ Scanning resumed.");
-      pauseBtn.disabled = false;
-      resumeBtn.disabled = true;
-    });
-
-    stopBtn.addEventListener('click', () => {
-      if (activeStream) {
-        activeStream.getTracks().forEach(track => track.stop());
-        video.srcObject = null;
-        activeStream = null;
-      }
-
-      if (currentControls && currentControls.stop) {
-        currentControls.stop();
-        currentControls = null;
-      }
-
-      updateOutput("🔴 Camera stopped.");
-      startBtn.disabled = false;
-      stopBtn.disabled = true;
-      pauseBtn.disabled = true;
-      resumeBtn.disabled = true;
-    });
-
-    exportBtn.addEventListener('click', () => {
-      const data = scannedLog.map(({ format, text }) => `${format}: ${text}`).join('\n');
-      const blob = new Blob([data], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'scanned_codes.txt';
-      a.click();
-      URL.revokeObjectURL(url);
+        if (err && !(err instanceof ZXing.NotFoundException)) {
+          console.error(err);
+        }
+      });
     });
   </script>
 </body>
