@@ -3,14 +3,18 @@ import { BrowserMultiFormatReader } from '@zxing/library'
 import './App.css'
 
 function App() {
+  console.log('App component rendering...');
   const [isScanning, setIsScanning] = useState(false)
   const [codeData, setCodeData] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
   const videoRef = useRef(null)
   const codeReader = useRef(new BrowserMultiFormatReader())
 
   useEffect(() => {
+    console.log('App component mounted');
+    setIsLoading(false);
     return () => {
-      // Cleanup when component unmounts
+      console.log('App component unmounting');
       if (isScanning) {
         stopScanning()
       }
@@ -18,8 +22,10 @@ function App() {
   }, [])
 
   const startScanning = async () => {
+    console.log('Starting scanning...');
     try {
       const videoInputDevices = await BrowserMultiFormatReader.listVideoInputDevices()
+      console.log('Available video devices:', videoInputDevices);
       const selectedDeviceId = videoInputDevices[0].deviceId
       
       setIsScanning(true)
@@ -30,13 +36,14 @@ function App() {
         videoRef.current,
         (result, err) => {
           if (result) {
+            console.log('Code detected:', result);
             setCodeData({
               text: result.getText(),
               format: result.getBarcodeFormat()
             })
           }
           if (err && !(err instanceof Error)) {
-            console.error(err)
+            console.error('Scanning error:', err)
           }
         }
       )
@@ -47,8 +54,17 @@ function App() {
   }
 
   const stopScanning = () => {
+    console.log('Stopping scanning...');
     codeReader.current.reset()
     setIsScanning(false)
+  }
+
+  if (isLoading) {
+    return (
+      <div className="app-container">
+        <h1>Loading...</h1>
+      </div>
+    )
   }
 
   return (
