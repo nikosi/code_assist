@@ -1,6 +1,6 @@
 {
   "name": "code-reader-app",
-  "private": true,
+  "homepage": "https://nikosi.github.io/code_assist",
   "version": "0.0.0",
   "type": "module",
   "scripts": {
