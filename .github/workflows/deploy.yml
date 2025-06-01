@@ -24,7 +24,9 @@ jobs:
         run: npm ci
 
       - name: Build
-        run: npm run build
+        run: |
+          export NODE_ENV=production
+          npm run build
 
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@v4

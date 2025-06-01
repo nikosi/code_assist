@@ -32,4 +32,9 @@ export default defineConfig({
     strictPort: true,
     host: true,
   },
+  resolve: {
+    alias: {
+      '@': '/src',
+    },
+  },
 })
