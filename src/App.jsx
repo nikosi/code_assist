@@ -24,7 +24,7 @@ function App() {
   const startScanning = async () => {
     console.log('Starting scanning...');
     try {
-      const videoInputDevices = await BrowserMultiFormatReader.listVideoInputDevices()
+      const videoInputDevices = await codeReader.current.listVideoInputDevices()
       console.log('Available video devices:', videoInputDevices);
       const selectedDeviceId = videoInputDevices[0].deviceId
       
